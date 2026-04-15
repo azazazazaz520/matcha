@@ -28,17 +28,17 @@ def load_bindings() -> dict:
             return {}
     return {}
 
-
+#保存好友码
 def save_bindings(bindings: dict) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with BINDINGS_FILE.open("w", encoding="utf-8") as file_handle:
         json.dump(bindings, file_handle, ensure_ascii=False, indent=2)
 
-
+#获取qq号
 def current_qq(session: CommandSession) -> str:
     return str(session.ctx.get("user_id", ""))
 
-
+#检查好友码
 def parse_friend_code(raw: str) -> int:
     code = raw.strip()
     if not code.isdigit():
