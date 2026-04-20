@@ -1,4 +1,5 @@
 import httpx
+from pathlib import Path
 from nonebot import CommandSession, on_command
 from maimai_py import PlayerIdentifier
 from maimai_py.exceptions import (
@@ -8,6 +9,12 @@ from maimai_py.exceptions import (
 )
 
 from .data_source import current_qq, load_bindings, lxns, maimai, parse_friend_code, save_bindings
+from .best50_debug import (
+    Best50DebugItem,
+    render_best50_debug_preview,
+    save_preview,
+    image_to_base64,
+)
 
 
 def _to_text(value) -> str:
@@ -169,7 +176,7 @@ async def player_info(session: CommandSession):
 
     await session.send(str(player.rating))
 
-#查询b50
+#查询b50 - 图片版本
 @on_command('best50', aliases=('b50', '查询b50', '查询best50', 'best50成绩'))
 async def best50(session: CommandSession):
     qq = current_qq(session)
@@ -194,8 +201,52 @@ async def best50(session: CommandSession):
         await session.send("未查询到 BEST50 成绩。")
         return
 
-    lines = [f"BEST50 成绩（共 {len(mapping)} 条）："]
-    for index, (song, diff, score) in enumerate(mapping, start=1):
-        lines.append(_format_best50_line(index, song, diff, score))
-
-    await _send_in_chunks(session, lines, chunk_size=10)
+    try:
+        # 构建 Best50DebugItem 列表
+        items = []
+        for index, (song, diff, score) in enumerate(mapping, start=1):
+            title = _to_text(getattr(song, "title", "未知曲目"))
+            difficulty = _to_text(getattr(diff, "type", getattr(diff, "name", "?")))
+            rate = _to_text(getattr(score, "rate", "-"))
+            achievements = _format_achievements(getattr(score, "achievements", None))
+            
+            ra_value = None
+            for attr_name in ("dx_rating", "ra", "rating"):
+                if hasattr(score, attr_name):
+                    ra_value = getattr(score, attr_name)
+                    break
+            
+            note = _to_text(getattr(score, "ds", ""))
+            if ra_value is not None:
+                note = f"{note} -> {_to_text(ra_value)}" if note else _to_text(ra_value)
+            
+            items.append(
+                Best50DebugItem(
+                    index=index,
+                    title=title,
+                    difficulty=difficulty,
+                    rate=rate,
+                    achievements=achievements,
+                    ra=_to_text(ra_value) if ra_value is not None else "-",
+                    note=note,
+                )
+            )
+        
+        # 生成图片
+        image = render_best50_debug_preview(
+            items,
+            title=f"BEST50 成绩预览（共 {len(items)} 条）",
+            show_grid=False,
+            show_labels=False,
+        )
+        
+        # 转换为 base64 并发送
+        base64_img = image_to_base64(image)
+        await session.send(f"[CQ:image,file=base64://{base64_img}]")
+    except Exception as e:
+        await session.send(f"生成图片失败：{str(e)}")
+        # 降级为文本版本
+        lines = [f"BEST50 成绩（共 {len(mapping)} 条）："]
+        for index, (song, diff, score) in enumerate(mapping, start=1):
+            lines.append(_format_best50_line(index, song, diff, score))
+        await _send_in_chunks(session, lines, chunk_size=10)

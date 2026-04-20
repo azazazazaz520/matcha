@@ -12,20 +12,18 @@ lxns = LXNSProvider(developer_token="ppcjoh-EUfaCjxk875CEsAhiwXJPXDnCmt5JpjmeZ0M
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 BINDINGS_FILE = DATA_DIR / "lxns_bindings.json"
-LEGACY_BINDINGS_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "lxns_bindings.json"
 
 
 def load_bindings() -> dict:
-    for bindings_file in (BINDINGS_FILE, LEGACY_BINDINGS_FILE):
-        if not bindings_file.exists():
-            continue
-        try:
-            with bindings_file.open("r", encoding="utf-8") as file_handle:
-                data = json.load(file_handle)
-                if isinstance(data, dict):
-                    return data
-        except (json.JSONDecodeError, OSError):
-            return {}
+    if not BINDINGS_FILE.exists():
+        return {}
+    try:
+        with BINDINGS_FILE.open("r", encoding="utf-8") as file_handle:
+            data = json.load(file_handle)
+            if isinstance(data, dict):
+                return data
+    except (json.JSONDecodeError, OSError):
+        return {}
     return {}
 
 #保存好友码

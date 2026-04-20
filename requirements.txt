@@ -2,3 +2,4 @@ nonebot
 requests
 jieba
 maimai-py
+Pillow
