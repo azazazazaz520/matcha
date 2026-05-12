@@ -358,8 +358,8 @@ class Best50DebugRenderer:
         card_width = self.card_width
         content_top = theme.padding + theme.header_height + 18 + theme.summary_height + 18
         raw_sections = [
-            ("旧版本 BEST35", "上半区：旧版本成绩", list(items[:35]), theme.accent_color, theme.card_edge_color),
-            ("新版本 BEST15", "下半区：新版本成绩", list(items[35:50]), theme.guide_color, theme.guide_color),
+            ("旧版本 BEST35", "", list(items[:35]), theme.accent_color, theme.card_edge_color),
+            ("新版本 BEST15", "", list(items[35:50]), theme.guide_color, theme.guide_color),
         ]
         section_items = [section for section in raw_sections if section[2]]
 
@@ -409,14 +409,9 @@ class Best50DebugRenderer:
             empty_box = (theme.padding, content_top, theme.width - theme.padding, content_top + 220)
             draw.rounded_rectangle(empty_box, radius=22, fill=theme.card_color, outline=theme.card_edge_color, width=2)
             title_font = self._load_font(28, bold=True)
-            body_font = self._load_font(22)
+            #body_font = self._load_font(22)
             draw.text((theme.padding + 28, content_top + 34), "No items to preview", font=title_font, fill=theme.text_color)
-            draw.text(
-                (theme.padding + 28, content_top + 88),
-                "把 best50 查询结果转成 Best50DebugItem 后，就能在这里预览完整布局。",
-                font=body_font,
-                fill=theme.muted_color,
-            )
+            
 
         footer_font = self._load_font(18)
         footer_y = total_height - 56
